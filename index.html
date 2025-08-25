@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Giới thiệu bạn bè</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #121a2b;
+      --muted: #9ab0d1;
+      --text: #e8f0ff;
+      --brand: #66a3ff;
+      --ring: #2b83f6;
+      --border: #1f2a44;
+    }
+    * { box-sizing: border-box }
+    html, body { height: 100% }
+    body {
+      margin: 0;
+      font-family: 'Be Vietnam Pro', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(1200px 800px at 10% -10%, #152341 0%, transparent 60%),
+                  radial-gradient(1000px 700px at 110% 10%, #0f1a33 0%, transparent 60%),
+                  var(--bg);
+      color: var(--text);
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: saturate(140%) blur(8px);
+      background: linear-gradient(180deg, rgba(11,18,32,.9), rgba(11,18,32,.6));
+      border-bottom: 1px solid var(--border);
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 18px 16px }
+    h1 { margin: 0; font-size: clamp(22px, 3vw, 34px); letter-spacing: 0.2px }
+    .sub { color: var(--muted); font-size: 14px; margin-top: 4px }
+
+    .controls { display: grid; gap: 10px; grid-template-columns: 1fr 170px 160px; margin-top: 14px }
+    .input, .select {
+      border: 1px solid var(--border);
+      background: #0e1728;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      outline: none;
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .input:focus, .select:focus { box-shadow: 0 0 0 4px rgba(43,131,246,.25); border-color: var(--ring) }
+
+    main { padding: 24px 16px }
+    .grid { max-width: 1200px; margin: 0 auto; display: grid; gap: 16px; grid-template-columns: repeat( auto-fill, minmax(230px, 1fr) ); }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0) 30%) , var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      transition: transform .15s ease, box-shadow .2s ease, border-color .2s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.35); border-color: #2e406b }
+    .avatar { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; background: #0b1529 }
+    .body { padding: 12px 14px 14px }
+    .name { font-weight: 800; font-size: 18px; line-height: 1.2 }
+    .meta { margin-top: 6px; color: var(--muted); font-size: 13px }
+    .intro { margin-top: 10px; font-size: 14px; color: #d5e3ff; min-height: 42px }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px }
+    .tag { font-size: 11px; color: #d2e2ff; background: rgba(102,163,255,.12); border: 1px solid rgba(102,163,255,.25); padding: 4px 8px; border-radius: 999px }
+    .card .actions { display: flex; gap: 8px; margin-top: 12px }
+    .btn {
+      border: 1px solid var(--border);
+      background: #0f1930;
+      color: var(--text);
+      padding: 9px 12px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px;
+      transition: background .15s, border-color .15s, transform .05s ease;
+    }
+    .btn:hover { background: #0e1a36; border-color: #2d3f6e }
+    .btn:active { transform: translateY(1px) }
+
+    .footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 16px 40px }
+
+    /* Modal */
+    .modal { position: fixed; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.5); backdrop-filter: blur(2px); z-index: 50 }
+    .modal.open { display: grid }
+    .sheet { width: min(920px, 92vw); background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; display: grid; grid-template-columns: 320px 1fr }
+    .sheet img { width: 100%; height: 100%; object-fit: cover }
+    .sheet .detail { padding: 20px }
+    .detail h2 { margin: 0; font-size: 28px }
+    .detail .dm { color: var(--muted); margin-top: 6px }
+    .detail p { margin-top: 12px; line-height: 1.6; color: #d7e5ff }
+    .close { position: absolute; top: 14px; right: 14px; background: #0e1729; border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; cursor: pointer }
+
+    @media (max-width: 720px) {
+      .controls { grid-template-columns: 1fr; }
+      .sheet { grid-template-columns: 1fr }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>📒 Danh bạ bạn bè</h1>
+      <div class="sub">Giới thiệu nhanh 10 bạn: xem năm sinh, lớp, mô tả & ảnh.</div>
+      <div class="controls">
+        <input id="q" class="input" placeholder="Tìm theo tên, mô tả... (ví dụ: bóng đá, dễ thương)" />
+        <select id="lop" class="select">
+          <option value="">— Lọc theo lớp —</option>
+        </select>
+        <select id="sort" class="select">
+          <option value="name">Sắp xếp: Tên (A→Z)</option>
+          <option value="year">Sắp xếp: Năm sinh (mới→cũ)</option>
+          <option value="class">Sắp xếp: Lớp (nhỏ→lớn)</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid" id="grid"></div>
+    <div class="footer">Lưu ý: Đây là trang demo. Web nhầm mục đích nấu xói</div>
+  </main>
+
+  <!-- Modal chi tiết -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="sheet">
+      <img id="mImg" alt="Ảnh bạn" />
+      <div class="detail">
+        <button class="close" id="mClose">Đóng ✕</button>
+        <h2 id="mName"></h2>
+        <div class="dm" id="mMeta"></div>
+        <p id="mIntro"></p>
+        <div class="tags" id="mTags"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DỮ LIỆU MẪU — SỬA TẠI ĐÂY
+  const friends = [
+  { 
+    name: 'Anh Thư', 
+    year: 2011, 
+    class: '9A', 
+    intro: 'Trẩu, bắn ff gà, non, bot, không trình mà cứ nói nhường.', 
+    photo: 'https://quickshare.samsungcloud.com/ls/public/v1/links/1756133551634LHWv4XD/contents/234781a281c311f0baaf9ac99f08ed9c/resized/1280?signature=KBNoHMgUK6vfyaIajYqss8v8IObbKY2LR_eDRbY0UEiPcoo5QbkDmxJ8XrYAxzkP4Q34IKd_xmeARGWrKEtlifY40Vh3t-ZSxVSr9PkuxseIWWupNtZrleIPmek6gMqe0RrIfsdyN7Qv68A3YJ-01A&storageType=file', 
+    tags: ['trẩu','bot','gáy'] 
+  }
+];
+
+    // ——— LOGIC HIỂN THỊ ———
+    const $ = (q) => document.querySelector(q);
+    const grid = $('#grid');
+    const q = $('#q');
+    const lop = $('#lop');
+    const sortSel = $('#sort');
+
+    // Render lớp vào dropdown
+    const classes = Array.from(new Set(friends.map(f => f.class))).sort((a,b)=> a.localeCompare(b, 'vi'));
+    classes.forEach(c => {
+      const opt = document.createElement('option'); opt.value = c; opt.textContent = `Lớp ${c}`; lop.appendChild(opt);
+    });
+
+    function friendCardHTML(f, idx){
+      return `
+        <article class="card" tabindex="0" role="button" aria-label="Xem chi tiết ${f.name}" onclick="openModal(${idx})">
+          <img class="avatar" src="${f.photo}" alt="${f.name}" loading="lazy"/>
+          <div class="body">
+            <div class="name">${f.name}</div>
+            <div class="meta">Năm sinh: <b>${f.year}</b> • Lớp: <b>${f.class}</b></div>
+            <div class="intro">${f.intro}</div>
+            <div class="tags">${(f.tags||[]).map(t => `<span class='tag'>#${t}</span>`).join('')}</div>
+            <div class="actions">
+              <button class="btn" onclick="event.stopPropagation(); openModal(${idx});">Xem chi tiết</button>
+              <button class="btn" onclick="event.stopPropagation(); share('${encodeURIComponent(f.name)}')">Chia sẻ</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function render(){
+      const term = q.value.trim().toLowerCase();
+      const lopVal = lop.value;
+      const sortBy = sortSel.value;
+
+      let items = friends.filter(f =>
+        (!lopVal || f.class === lopVal) && (
+          !term || f.name.toLowerCase().includes(term) || f.intro.toLowerCase().includes(term) || (f.tags||[]).some(t => t.toLowerCase().includes(term))
+        )
+      );
+
+      if (sortBy === 'name') items.sort((a,b) => a.name.localeCompare(b.name, 'vi'));
+      if (sortBy === 'year') items.sort((a,b) => (b.year||0) - (a.year||0));
+      if (sortBy === 'class') items.sort((a,b) => a.class.localeCompare(b.class, 'vi'));
+
+      grid.innerHTML = items.map((f, idx) => friendCardHTML(f, friends.indexOf(f))).join('');
+    }
+
+    q.addEventListener('input', render);
+    lop.addEventListener('change', render);
+    sortSel.addEventListener('change', render);
+
+    // ——— MODAL ———
+    const modal = $('#modal');
+    const mImg = $('#mImg');
+    const mName = $('#mName');
+    const mMeta = $('#mMeta');
+    const mIntro = $('#mIntro');
+    const mTags = $('#mTags');
+    const mClose = $('#mClose');
+
+    function openModal(idx){
+      const f = friends[idx];
+      if(!f) return;
+      mImg.src = f.photo;
+      mName.textContent = f.name;
+      mMeta.textContent = `Năm sinh: ${f.year} • Lớp: ${f.class}`;
+      mIntro.textContent = f.intro;
+      mTags.innerHTML = (f.tags||[]).map(t => `<span class='tag'>#${t}</span>`).join('');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden','false');
+    }
+    function closeModal(){
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+    }
+    mClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    // ——— SHARE (Web Share API nếu có) ———
+    function share(name){
+      const n = decodeURIComponent(name);
+      const text = `Giới thiệu ${n} trong danh bạ bạn bè.`;
+      if (navigator.share){ navigator.share({ title: document.title, text, url: location.href }).catch(()=>{}); }
+      else { navigator.clipboard?.writeText(text + ' ' + location.href); alert('Đã copy mô tả để chia sẻ!'); }
+    }
+
+    // Khởi tạo
+    render();
+  </script>
+</body>
+</html>
