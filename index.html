@@ -84,13 +84,16 @@
     /* Modal */
     .modal { position: fixed; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.5); backdrop-filter: blur(2px); z-index: 50 }
     .modal.open { display: grid }
-    .sheet { width: min(920px, 92vw); background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; display: grid; grid-template-columns: 320px 1fr }
-    .sheet img { width: 100%; height: 100%; object-fit: cover }
-    .sheet .detail { padding: 20px }
+    .sheet { width: min(920px, 92vw); background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr }
+    .detail { padding: 20px }
     .detail h2 { margin: 0; font-size: 28px }
     .detail .dm { color: var(--muted); margin-top: 6px }
     .detail p { margin-top: 12px; line-height: 1.6; color: #d7e5ff }
     .close { position: absolute; top: 14px; right: 14px; background: #0e1729; border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; cursor: pointer }
+
+    .gallery { display: grid; grid-template-columns: 1fr; }
+    .gallery img { width: 100%; height: 100%; object-fit: cover; display: block }
+    .gallery.multiple { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap:6px; }
 
     @media (max-width: 720px) {
       .controls { grid-template-columns: 1fr; }
@@ -125,7 +128,7 @@
   <!-- Modal chi tiết -->
   <div class="modal" id="modal" aria-hidden="true">
     <div class="sheet">
-      <img id="mImg" alt="Ảnh bạn" />
+      <div class="gallery" id="mGallery"></div>
       <div class="detail">
         <button class="close" id="mClose">Đóng ✕</button>
         <h2 id="mName"></h2>
@@ -137,110 +140,115 @@
   </div>
 
   <script>
-    // DỮ LIỆU MẪU — SỬA TẠI ĐÂY
+  // DỮ LIỆU MẪU
   const friends = [
-  { 
-    name: 'Anh Thư', 
-    year: 2011, 
-    class: '9A', 
-    intro: 'Trẩu, bắn ff gà, non, bot, không trình mà cứ nói nhường.', 
-    photo: 'https://quickshare.samsungcloud.com/ls/public/v1/links/1756133551634LHWv4XD/contents/234781a281c311f0baaf9ac99f08ed9c/resized/1280?signature=KBNoHMgUK6vfyaIajYqss8v8IObbKY2LR_eDRbY0UEiPcoo5QbkDmxJ8XrYAxzkP4Q34IKd_xmeARGWrKEtlifY40Vh3t-ZSxVSr9PkuxseIWWupNtZrleIPmek6gMqe0RrIfsdyN7Qv68A3YJ-01A&storageType=file', 
-    tags: ['trẩu','bot','gáy'] 
-  }
-];
+    { 
+      name: 'Anh Thư', 
+      year: 2011, 
+      class: '9A', 
+      intro: 'Trẩu, bắn ff gà, non, bot, không trình mà cứ nói nhường.', 
+      photo: 'https://i.ibb.co/wQ9R3kd/anh-thu-main.jpg',
+      photos: [
+        'https://quickshare.samsungcloud.com/ls/public/v1/links/1756304804264LdG3V9G/contents/de219da0835111f0bbb0f26fffc8bf9d/resized/1280?signature=KBNoHMgUK6vfyaIajYqss8v8IObbKY2LR_eDRbY0UEiPcoo5QbkDmxJ8XrYAxzkP4Q34IKd_xmeARGWrKEtlifY40Vh3t-ZSxVSr9PkuxscGBqr-qBRjww2v8dIQLMoMRtwRcdGxKD_1koHL3OR_Gg&storageType=file',
+        'https://quickshare.samsungcloud.com/ls/public/v1/links/1756304804264LdG3V9G/contents/de7ae130835111f0819d4665ac1e4291/resized/1280?signature=KBNoHMgUK6vfyaIajYqss8v8IObbKY2LR_eDRbY0UEiPcoo5QbkDmxJ8XrYAxzkP4Q34IKd_xmeARGWrKEtlifY40Vh3t-ZSxVSr9PkuxscGBqr-qBRjww2v8dIQLMoMRtwRcdGxKD_1koHL3OR_Gg&storageType=file',
+        'https://quickshare.samsungcloud.com/ls/public/v1/links/1756304804264LdG3V9G/contents/de95bc30835111f0a8a79638c14550bc/resized/1280?signature=KBNoHMgUK6vfyaIajYqss8v8IObbKY2LR_eDRbY0UEiPcoo5QbkDmxJ8XrYAxzkP4Q34IKd_xmeARGWrKEtlifY40Vh3t-ZSxVSr9PkuxscGBqr-qBRjww2v8dIQLMoMRtwRcdGxKD_1koHL3OR_Gg&storageType=file'
+      ],
+      tags: ['trẩu','bot','gáy'] 
+    }
+  ];
 
-    // ——— LOGIC HIỂN THỊ ———
-    const $ = (q) => document.querySelector(q);
-    const grid = $('#grid');
-    const q = $('#q');
-    const lop = $('#lop');
-    const sortSel = $('#sort');
+  const $ = (q) => document.querySelector(q);
+  const grid = $('#grid');
+  const q = $('#q');
+  const lop = $('#lop');
+  const sortSel = $('#sort');
 
-    // Render lớp vào dropdown
-    const classes = Array.from(new Set(friends.map(f => f.class))).sort((a,b)=> a.localeCompare(b, 'vi'));
-    classes.forEach(c => {
-      const opt = document.createElement('option'); opt.value = c; opt.textContent = `Lớp ${c}`; lop.appendChild(opt);
-    });
+  // Render lớp vào dropdown
+  const classes = Array.from(new Set(friends.map(f => f.class))).sort((a,b)=> a.localeCompare(b, 'vi'));
+  classes.forEach(c => {
+    const opt = document.createElement('option'); opt.value = c; opt.textContent = `Lớp ${c}`; lop.appendChild(opt);
+  });
 
-    function friendCardHTML(f, idx){
-      return `
-        <article class="card" tabindex="0" role="button" aria-label="Xem chi tiết ${f.name}" onclick="openModal(${idx})">
-          <img class="avatar" src="${f.photo}" alt="${f.name}" loading="lazy"/>
-          <div class="body">
-            <div class="name">${f.name}</div>
-            <div class="meta">Năm sinh: <b>${f.year}</b> • Lớp: <b>${f.class}</b></div>
-            <div class="intro">${f.intro}</div>
-            <div class="tags">${(f.tags||[]).map(t => `<span class='tag'>#${t}</span>`).join('')}</div>
-            <div class="actions">
-              <button class="btn" onclick="event.stopPropagation(); openModal(${idx});">Xem chi tiết</button>
-              <button class="btn" onclick="event.stopPropagation(); share('${encodeURIComponent(f.name)}')">Chia sẻ</button>
-            </div>
+  function friendCardHTML(f, idx){
+    return `
+      <article class="card" tabindex="0" role="button" aria-label="Xem chi tiết ${f.name}" onclick="openModal(${idx})">
+        <img class="avatar" src="${f.photo}" alt="${f.name}" loading="lazy"/>
+        <div class="body">
+          <div class="name">${f.name}</div>
+          <div class="meta">Năm sinh: <b>${f.year}</b> • Lớp: <b>${f.class}</b></div>
+          <div class="intro">${f.intro}</div>
+          <div class="tags">${(f.tags||[]).map(t => `<span class='tag'>#${t}</span>`).join('')}</div>
+          <div class="actions">
+            <button class="btn" onclick="event.stopPropagation(); openModal(${idx});">Xem chi tiết</button>
+            <button class="btn" onclick="event.stopPropagation(); share('${encodeURIComponent(f.name)}')">Chia sẻ</button>
           </div>
-        </article>
-      `;
-    }
+        </div>
+      </article>
+    `;
+  }
 
-    function render(){
-      const term = q.value.trim().toLowerCase();
-      const lopVal = lop.value;
-      const sortBy = sortSel.value;
+  function render(){
+    const term = q.value.trim().toLowerCase();
+    const lopVal = lop.value;
+    const sortBy = sortSel.value;
 
-      let items = friends.filter(f =>
-        (!lopVal || f.class === lopVal) && (
-          !term || f.name.toLowerCase().includes(term) || f.intro.toLowerCase().includes(term) || (f.tags||[]).some(t => t.toLowerCase().includes(term))
-        )
-      );
+    let items = friends.filter(f =>
+      (!lopVal || f.class === lopVal) && (
+        !term || f.name.toLowerCase().includes(term) || f.intro.toLowerCase().includes(term) || (f.tags||[]).some(t => t.toLowerCase().includes(term))
+      )
+    );
 
-      if (sortBy === 'name') items.sort((a,b) => a.name.localeCompare(b.name, 'vi'));
-      if (sortBy === 'year') items.sort((a,b) => (b.year||0) - (a.year||0));
-      if (sortBy === 'class') items.sort((a,b) => a.class.localeCompare(b.class, 'vi'));
+    if (sortBy === 'name') items.sort((a,b) => a.name.localeCompare(b.name, 'vi'));
+    if (sortBy === 'year') items.sort((a,b) => (b.year||0) - (a.year||0));
+    if (sortBy === 'class') items.sort((a,b) => a.class.localeCompare(b.class, 'vi'));
 
-      grid.innerHTML = items.map((f, idx) => friendCardHTML(f, friends.indexOf(f))).join('');
-    }
+    grid.innerHTML = items.map((f, idx) => friendCardHTML(f, friends.indexOf(f))).join('');
+  }
 
-    q.addEventListener('input', render);
-    lop.addEventListener('change', render);
-    sortSel.addEventListener('change', render);
+  q.addEventListener('input', render);
+  lop.addEventListener('change', render);
+  sortSel.addEventListener('change', render);
 
-    // ——— MODAL ———
-    const modal = $('#modal');
-    const mImg = $('#mImg');
-    const mName = $('#mName');
-    const mMeta = $('#mMeta');
-    const mIntro = $('#mIntro');
-    const mTags = $('#mTags');
-    const mClose = $('#mClose');
+  // Modal
+  const modal = $('#modal');
+  const mGallery = $('#mGallery');
+  const mName = $('#mName');
+  const mMeta = $('#mMeta');
+  const mIntro = $('#mIntro');
+  const mTags = $('#mTags');
+  const mClose = $('#mClose');
 
-    function openModal(idx){
-      const f = friends[idx];
-      if(!f) return;
-      mImg.src = f.photo;
-      mName.textContent = f.name;
-      mMeta.textContent = `Năm sinh: ${f.year} • Lớp: ${f.class}`;
-      mIntro.textContent = f.intro;
-      mTags.innerHTML = (f.tags||[]).map(t => `<span class='tag'>#${t}</span>`).join('');
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden','false');
-    }
-    function closeModal(){
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden','true');
-    }
-    mClose.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+  function openModal(idx){
+    const f = friends[idx];
+    if(!f) return;
+    const allPhotos = [f.photo, ...(f.photos || [])];
+    mGallery.innerHTML = allPhotos.map(p => `<img src="${p}" alt="${f.name}"/>`).join('');
+    mGallery.className = allPhotos.length > 1 ? 'gallery multiple' : 'gallery';
 
-    // ——— SHARE (Web Share API nếu có) ———
-    function share(name){
-      const n = decodeURIComponent(name);
-      const text = `Giới thiệu ${n} trong danh bạ bạn bè.`;
-      if (navigator.share){ navigator.share({ title: document.title, text, url: location.href }).catch(()=>{}); }
-      else { navigator.clipboard?.writeText(text + ' ' + location.href); alert('Đã copy mô tả để chia sẻ!'); }
-    }
+    mName.textContent = f.name;
+    mMeta.textContent = `Năm sinh: ${f.year} • Lớp: ${f.class}`;
+    mIntro.textContent = f.intro;
+    mTags.innerHTML = (f.tags||[]).map(t => `<span class='tag'>#${t}</span>`).join('');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+  }
+  function closeModal(){
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden','true');
+  }
+  mClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-    // Khởi tạo
-    render();
+  // Share
+  function share(name){
+    const n = decodeURIComponent(name);
+    const text = `Giới thiệu ${n} trong danh bạ bạn bè.`;
+    if (navigator.share){ navigator.share({ title: document.title, text, url: location.href }).catch(()=>{}); }
+    else { navigator.clipboard?.writeText(text + ' ' + location.href); alert('Đã copy mô tả để chia sẻ!'); }
+  }
+
+  render();
   </script>
 </body>
 </html>
-
